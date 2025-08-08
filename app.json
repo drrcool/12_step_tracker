@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "12 Step Tracker",
+    "slug": "twelve-step-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f0f4f7"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.twelvesteptracker"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f0f4f7"
+      },
+      "package": "com.yourcompany.twelvesteptracker"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
