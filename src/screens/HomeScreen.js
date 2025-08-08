@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -14,19 +14,15 @@ import { theme } from '../theme';
 const { width } = Dimensions.get('window');
 
 const HomeScreen = () => {
-    const [cleanTime, setCleanTime] = useState({
+    const [cleanTime] = useState({
         days: 145,
         hours: 12,
         minutes: 34,
     });
 
-    const [dailyReflection, setDailyReflection] = useState(
+    const [dailyReflection] = useState(
         "Today I choose progress over perfection. Every moment is a new opportunity to grow and heal."
     );
-
-    // Calculate total clean time
-    const totalHours = cleanTime.days * 24 + cleanTime.hours;
-    const totalMinutes = totalHours * 60 + cleanTime.minutes;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -106,19 +102,6 @@ const HomeScreen = () => {
                         </TouchableOpacity>
                     </View>
                 </View>
-
-                {/* Meeting Locator Teaser */}
-                <TouchableOpacity style={styles.meetingCard}>
-                    <View style={styles.meetingHeader}>
-                        <Ionicons name="location-outline" size={24} color={theme.colors.primary[500]} />
-                        <Text style={styles.meetingTitle}>Find Nearby Meetings</Text>
-                    </View>
-                    <Text style={styles.meetingSubtitle}>3 meetings happening today within 5 miles</Text>
-                    <View style={styles.meetingCTA}>
-                        <Text style={styles.meetingCTAText}>View all meetings</Text>
-                        <Ionicons name="chevron-forward" size={16} color={theme.colors.primary[500]} />
-                    </View>
-                </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
     );
@@ -250,34 +233,6 @@ const styles = StyleSheet.create({
         ...theme.typography.styles.subtitle2,
         color: theme.colors.text.primary,
         marginTop: theme.spacing.sm,
-    },
-    meetingCard: {
-        ...theme.components.card,
-        backgroundColor: theme.colors.background.primary,
-    },
-    meetingHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: theme.spacing.sm,
-    },
-    meetingTitle: {
-        ...theme.typography.styles.h4,
-        color: theme.colors.text.primary,
-        marginLeft: theme.spacing.sm,
-    },
-    meetingSubtitle: {
-        ...theme.typography.styles.body2,
-        color: theme.colors.text.secondary,
-        marginBottom: theme.spacing.md,
-    },
-    meetingCTA: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    meetingCTAText: {
-        ...theme.typography.styles.subtitle2,
-        color: theme.colors.primary[500],
     },
 });
 
