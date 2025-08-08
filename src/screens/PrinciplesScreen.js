@@ -26,12 +26,13 @@ const styles = StyleSheet.create({
         padding: theme.spacing.lg,
     },
     title: {
-        ...theme.typography.styles.h2,
+        fontSize: 30,
+        fontWeight: '600',
         color: theme.colors.text.primary,
         marginBottom: theme.spacing.sm,
     },
     subtitle: {
-        ...theme.typography.styles.body1,
+        fontSize: 16,
         color: theme.colors.text.secondary,
         textAlign: 'center',
     },
