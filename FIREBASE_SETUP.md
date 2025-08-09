@@ -105,48 +105,48 @@ service cloud.firestore {
       allow read: if request.auth != null;
       // No write access from the app - meetings are managed externally
         }
-    
+
     // Conversations - users can only access conversations they're part of
     match /conversations/{conversationId} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         request.auth.uid in resource.data.participantIds;
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
         request.auth.uid in request.resource.data.participantIds;
     }
-    
+
     // Messages - users can only read/write messages in conversations they're part of
     match /messages/{messageId} {
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
         (request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds);
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.senderId &&
         (request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participantIds);
-      allow update, delete: if request.auth != null && 
+      allow update, delete: if request.auth != null &&
         request.auth.uid == resource.data.senderId;
     }
-    
+
     // Conversation participants - users can only manage their own participation
     match /conversation_participants/{participantId} {
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
         (request.auth.uid == resource.data.userId ||
          request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds);
-      allow write: if request.auth != null && 
+      allow write: if request.auth != null &&
         (request.auth.uid == resource.data.userId ||
          isGroupAdmin(resource.data.conversationId, request.auth.uid));
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.userId;
     }
-    
+
     // Message reactions - users can manage their own reactions
     match /message_reactions/{reactionId} {
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
         (request.auth.uid in get(/databases/$(database)/documents/conversations/$(get(/databases/$(database)/documents/messages/$(resource.data.messageId)).data.conversationId)).data.participantIds);
-      allow write: if request.auth != null && 
+      allow write: if request.auth != null &&
         request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.userId;
     }
-    
+
     // Sponsorship relationships
     match /sponsorships/{relationshipId} {
       allow read, write: if request.auth != null &&

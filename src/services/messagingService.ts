@@ -131,7 +131,7 @@ export const messagingService = {
         id: doc.id,
         ...doc.data()
       } as Message)).reverse(); // Reverse to show oldest first
-      
+
       callback(messages);
     });
   },
@@ -267,8 +267,8 @@ export const messagingService = {
     } as Conversation));
 
     // Filter for conversations that include the other user
-    return conversations.filter(conv => 
-      conv.participantIds.includes(otherUserId) && 
+    return conversations.filter(conv =>
+      conv.participantIds.includes(otherUserId) &&
       conv.participantIds.length === 2
     );
   },
@@ -377,9 +377,9 @@ export const messagingService = {
 
     const messageRef = doc(db, 'messages', messageId);
     const messageSnap = await getDoc(messageRef);
-    
+
     if (!messageSnap.exists()) throw new Error('Message not found');
-    
+
     const message = messageSnap.data() as Message;
     if (message.senderId !== auth.currentUser.uid) {
       throw new Error('You can only edit your own messages');
@@ -399,9 +399,9 @@ export const messagingService = {
 
     const messageRef = doc(db, 'messages', messageId);
     const messageSnap = await getDoc(messageRef);
-    
+
     if (!messageSnap.exists()) throw new Error('Message not found');
-    
+
     const message = messageSnap.data() as Message;
     if (message.senderId !== auth.currentUser.uid) {
       throw new Error('You can only delete your own messages');
