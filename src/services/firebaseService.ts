@@ -17,6 +17,9 @@ import {
   QuerySnapshot,
   Unsubscribe,
   Timestamp,
+  writeBatch,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import {
@@ -39,6 +42,10 @@ import {
   GroupChallenge,
   ChallengeParticipation,
   UserStats,
+  Message,
+  Conversation,
+  ConversationParticipant,
+  MessageReaction,
 } from '../types';
 
 // Utility Functions
@@ -127,6 +134,9 @@ export const userService = {
   },
 };
 
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
+
 // Clean Time Service
 export const cleanTimeService = {
   // Set sobriety date
@@ -158,6 +168,9 @@ export const cleanTimeService = {
     return { days, hours, minutes };
   },
 };
+
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
 
 // Daily Reflections Service
 export const reflectionService = {
@@ -203,6 +216,9 @@ export const reflectionService = {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reflection));
   },
 };
+
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
 
 // Meeting Service (Global meetings collection)
 export const meetingService = {
@@ -292,6 +308,9 @@ export const meetingService = {
     return this.searchMeetings(filters);
   },
 };
+
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
 
 // Meeting Attendance Service
 export const attendanceService = {
@@ -409,6 +428,9 @@ export const attendanceService = {
   },
 };
 
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
+
 // Progress Tracking Service (Updated)
 export const progressService = {
   // Log mood entry
@@ -434,6 +456,9 @@ export const progressService = {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Mood));
   },
 };
+
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
 
 // Goals Service
 export const goalsService = {
@@ -481,6 +506,9 @@ export const goalsService = {
   },
 };
 
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
+
 // Meditation Service
 export const meditationService = {
   // Log meditation session
@@ -510,6 +538,9 @@ export const meditationService = {
   },
 };
 
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
+
 // Gratitude Service
 export const gratitudeService = {
   // Add gratitude entry
@@ -535,6 +566,9 @@ export const gratitudeService = {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GratitudeEntry));
   },
 };
+
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
 
 // Sponsorship Service
 export const sponsorshipService = {
@@ -611,6 +645,9 @@ export const sponsorshipService = {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SponsorshipRelationship));
   },
 };
+
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
 
 // Community Groups Service
 export const communityService = {
@@ -754,6 +791,9 @@ export const communityService = {
     return Promise.all(userPromises);
   },
 };
+
+// Export messaging service from separate file
+export { messagingService } from './messagingService';
 
 // Group Challenges Service
 export const challengeService = {
@@ -969,3 +1009,6 @@ export const challengeService = {
     return Promise.all(userPromises);
   },
 };
+
+// Export messaging service from separate file
+export { messagingService } from './messagingService';

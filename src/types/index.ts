@@ -233,6 +233,64 @@ export interface UserStats {
   lastCalculated: Date | FirebaseTimestamp;
 }
 
+// Messaging Types
+export interface Message {
+  id?: string;
+  senderId: string;
+  recipientId?: string; // For direct messages
+  groupId?: string; // For group messages
+  content: string;
+  type: 'text' | 'image' | 'system';
+  status: 'sent' | 'delivered' | 'read';
+  replyToMessageId?: string; // For threaded replies
+  isEdited?: boolean;
+  editedAt?: Date | FirebaseTimestamp;
+  createdAt: Date | FirebaseTimestamp;
+  updatedAt: Date | FirebaseTimestamp;
+}
+
+export interface Conversation {
+  id?: string;
+  type: 'direct' | 'group' | 'sponsor';
+  participantIds: string[];
+  groupId?: string; // If this is a group conversation
+  lastMessage?: {
+    content: string;
+    senderId: string;
+    timestamp: Date | FirebaseTimestamp;
+    type: Message['type'];
+  };
+  lastActivity: Date | FirebaseTimestamp;
+  isActive: boolean;
+  metadata?: {
+    title?: string; // Custom conversation title
+    description?: string;
+    isAnonymous?: boolean; // For anonymous support conversations
+  };
+  createdAt: Date | FirebaseTimestamp;
+  updatedAt: Date | FirebaseTimestamp;
+}
+
+export interface ConversationParticipant {
+  id?: string;
+  conversationId: string;
+  userId: string;
+  role: 'participant' | 'moderator' | 'admin';
+  joinedAt: Date | FirebaseTimestamp;
+  lastReadAt?: Date | FirebaseTimestamp;
+  notificationsEnabled: boolean;
+  status: 'active' | 'muted' | 'blocked';
+  permissions?: string[];
+}
+
+export interface MessageReaction {
+  id?: string;
+  messageId: string;
+  userId: string;
+  reaction: string; // emoji or reaction type
+  createdAt: Date | FirebaseTimestamp;
+}
+
 // Location and search types
 export interface UserLocation {
   latitude: number;

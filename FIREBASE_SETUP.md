@@ -104,8 +104,49 @@ service cloud.firestore {
     match /meetings/{meetingId} {
       allow read: if request.auth != null;
       // No write access from the app - meetings are managed externally
+        }
+    
+    // Conversations - users can only access conversations they're part of
+    match /conversations/{conversationId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid in resource.data.participantIds;
+      allow create: if request.auth != null && 
+        request.auth.uid in request.resource.data.participantIds;
     }
-
+    
+    // Messages - users can only read/write messages in conversations they're part of
+    match /messages/{messageId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds);
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.senderId &&
+        (request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participantIds);
+      allow update, delete: if request.auth != null && 
+        request.auth.uid == resource.data.senderId;
+    }
+    
+    // Conversation participants - users can only manage their own participation
+    match /conversation_participants/{participantId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.userId ||
+         request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds);
+      allow write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId ||
+         isGroupAdmin(resource.data.conversationId, request.auth.uid));
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Message reactions - users can manage their own reactions
+    match /message_reactions/{reactionId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid in get(/databases/$(database)/documents/conversations/$(get(/databases/$(database)/documents/messages/$(resource.data.messageId)).data.conversationId)).data.participantIds);
+      allow write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
     // Sponsorship relationships
     match /sponsorships/{relationshipId} {
       allow read, write: if request.auth != null &&
@@ -215,6 +256,60 @@ meetings/
     - updatedAt: timestamp
 
 
+
+# Global Collections
+
+conversations/
+  {conversationId}/
+    - type: string ('direct', 'group', 'sponsor')
+    - participantIds: array of strings (user IDs)
+    - groupId: string (optional, if group conversation)
+    - lastMessage: object (optional)
+      - content: string
+      - senderId: string
+      - timestamp: timestamp
+      - type: string
+    - lastActivity: timestamp
+    - isActive: boolean
+    - metadata: object (optional)
+      - title: string (optional)
+      - description: string (optional)
+      - isAnonymous: boolean (optional)
+    - createdAt: timestamp
+    - updatedAt: timestamp
+
+messages/
+  {messageId}/
+    - senderId: string (reference to user)
+    - conversationId: string (reference to conversation)
+    - recipientId: string (optional, for direct messages)
+    - groupId: string (optional, for group messages)
+    - content: string
+    - type: string ('text', 'image', 'system')
+    - status: string ('sent', 'delivered', 'read')
+    - replyToMessageId: string (optional, for threaded replies)
+    - isEdited: boolean (optional)
+    - editedAt: timestamp (optional)
+    - createdAt: timestamp
+    - updatedAt: timestamp
+
+conversation_participants/
+  {participantId}/
+    - conversationId: string (reference to conversation)
+    - userId: string (reference to user)
+    - role: string ('participant', 'moderator', 'admin')
+    - joinedAt: timestamp
+    - lastReadAt: timestamp (optional, for read receipts)
+    - notificationsEnabled: boolean
+    - status: string ('active', 'muted', 'blocked')
+    - permissions: array of strings (optional)
+
+message_reactions/
+  {reactionId}/
+    - messageId: string (reference to message)
+    - userId: string (reference to user)
+    - reaction: string (emoji or reaction type)
+    - createdAt: timestamp
 
 # User-Specific Collections
 sponsorships/
@@ -442,6 +537,23 @@ The app includes several service functions to interact with Firebase:
 - `challengeService.updateChallengeProgressFromUserData(challengeId)` - Auto-calculate progress from user data
 - `challengeService.getChallengeLeaderboard(challengeId)` - Get leaderboard for a challenge
 
+### Messaging & Real-time Communication
+- `messagingService.createConversation(type, participantIds, groupId?, metadata?)` - Create a new conversation
+- `messagingService.sendMessage(conversationId, content, type?, replyToMessageId?)` - Send a message
+- `messagingService.subscribeToMessages(conversationId, callback, limitCount?)` - Listen to messages with realtime updates
+- `messagingService.subscribeToConversations(callback)` - Listen to user's conversations with realtime updates
+- `messagingService.markMessagesAsRead(conversationId)` - Mark messages as read
+- `messagingService.getUnreadCount(conversationId)` - Get unread message count
+- `messagingService.startDirectConversation(otherUserId)` - Start or get existing direct conversation
+- `messagingService.startSponsorConversation(sponsorId)` - Start conversation with sponsor/sponsee
+- `messagingService.startGroupConversation(groupId, title?)` - Start group conversation
+- `messagingService.addReaction(messageId, reaction)` - Add emoji reaction to message
+- `messagingService.removeReaction(messageId, reaction)` - Remove emoji reaction
+- `messagingService.getMessageReactions(messageId)` - Get all reactions for a message
+- `messagingService.editMessage(messageId, newContent)` - Edit a message
+- `messagingService.deleteMessage(messageId)` - Delete a message
+- `messagingService.leaveConversation(conversationId)` - Leave a conversation
+
 ## Example Usage
 
 ### Searching for Meetings
@@ -593,6 +705,106 @@ const leaderboard = await challengeService.getChallengeLeaderboard(challengeId);
 leaderboard.forEach((participant, index) => {
   console.log(`${index + 1}. ${participant.user?.displayName}: ${participant.progress} meetings`);
 });
+```
+
+### Messaging Examples
+
+```javascript
+// 1. Start a direct conversation with another user
+const otherUserId = 'user-456';
+const conversationId = await messagingService.startDirectConversation(otherUserId);
+console.log('Started conversation:', conversationId);
+
+// 2. Send a message
+const messageId = await messagingService.sendMessage(
+  conversationId,
+  'Hey! How are you doing with your recovery?',
+  'text'
+);
+
+// 3. Listen to messages in real-time
+const unsubscribeMessages = messagingService.subscribeToMessages(
+  conversationId,
+  (messages) => {
+    console.log('Messages updated:', messages);
+    messages.forEach(message => {
+      console.log(`${message.senderId}: ${message.content}`);
+    });
+  }
+);
+
+// 4. Listen to all conversations in real-time
+const unsubscribeConversations = messagingService.subscribeToConversations(
+  (conversations) => {
+    console.log('Conversations updated:', conversations);
+    conversations.forEach(conv => {
+      console.log(`${conv.type}: ${conv.lastMessage?.content} (${conv.unreadCount} unread)`);
+    });
+  }
+);
+
+// 5. Start a sponsor conversation
+const sponsorId = await sponsorshipService.getCurrentSponsor();
+if (sponsorId) {
+  const sponsorConversationId = await messagingService.startSponsorConversation(sponsorId.sponsorId);
+  await messagingService.sendMessage(
+    sponsorConversationId,
+    'Hi, I wanted to check in about my progress this week.'
+  );
+}
+
+// 6. Start a group conversation
+const groupId = 'group-123';
+const groupConversationId = await messagingService.startGroupConversation(
+  groupId,
+  'Weekly Check-in Chat'
+);
+
+// 7. Send a threaded reply
+const replyId = await messagingService.sendMessage(
+  conversationId,
+  'That sounds great! Keep it up!',
+  'text',
+  messageId // replying to the previous message
+);
+
+// 8. Add reactions to messages
+await messagingService.addReaction(messageId, '👏');
+await messagingService.addReaction(messageId, '💪');
+
+// 9. Get all reactions for a message
+const reactions = await messagingService.getMessageReactions(messageId);
+console.log('Reactions:', reactions);
+// Output: { '👏': [reaction1, reaction2], '💪': [reaction3] }
+
+// 10. Edit a message
+await messagingService.editMessage(messageId, 'Hey! How are you doing with your recovery journey?');
+
+// 11. Mark messages as read
+await messagingService.markMessagesAsRead(conversationId);
+
+// 12. Get unread count
+const unreadCount = await messagingService.getUnreadCount(conversationId);
+console.log(`${unreadCount} unread messages`);
+
+// 13. Anonymous support conversation
+const supportConversationId = await messagingService.createConversation(
+  'direct',
+  ['counselor-user-id'],
+  undefined,
+  {
+    title: 'Anonymous Support',
+    description: 'Anonymous peer support conversation',
+    isAnonymous: true
+  }
+);
+
+// 14. Leave a conversation
+await messagingService.leaveConversation(conversationId);
+
+// 15. Clean up listeners when component unmounts
+// unsubscribeMessages();
+// unsubscribeConversations();
 
 // 5. Get my current challenges
 const myChallenges = await challengeService.getUserChallenges('active');
